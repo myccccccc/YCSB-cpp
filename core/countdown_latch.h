@@ -8,35 +8,37 @@
 #ifndef YCSB_C_COUNTDOWN_LATCH_H_
 #define YCSB_C_COUNTDOWN_LATCH_H_
 
-#include <mutex>
 #include <condition_variable>
+#include <mutex>
 
 class CountDownLatch {
- public:
-  CountDownLatch(int count) : count_(count) {}
-  void Await() {
-    std::unique_lock<std::mutex> lock(mu_);
-    if (count_ > 0) {
-      cv_.wait(lock);
+   public:
+    CountDownLatch(int count) : count_(count) {}
+    void Await() {
+        std::unique_lock<std::mutex> lock(mu_);
+        if (count_ > 0) {
+            cv_.wait(lock);
+        }
     }
-  }
-  bool AwaitFor(long timeout_sec) {
-    std::unique_lock<std::mutex> lock(mu_);
-    if (count_ > 0) {
-      return cv_.wait_for(lock, std::chrono::seconds(timeout_sec)) == std::cv_status::no_timeout;
+    bool AwaitFor(long timeout_sec) {
+        std::unique_lock<std::mutex> lock(mu_);
+        if (count_ > 0) {
+            return cv_.wait_for(lock, std::chrono::seconds(timeout_sec)) ==
+                   std::cv_status::no_timeout;
+        }
+        return true;
     }
-    return true;
-  }
-  void CountDown() {
-    std::unique_lock<std::mutex> lock(mu_);
-    if (--count_ <= 0) {
-      cv_.notify_all();
+    void CountDown() {
+        std::unique_lock<std::mutex> lock(mu_);
+        if (--count_ <= 0) {
+            cv_.notify_all();
+        }
     }
-  }
- private:
-  int count_;
-  std::mutex mu_;
-  std::condition_variable cv_;
+
+   private:
+    int count_;
+    std::mutex mu_;
+    std::condition_variable cv_;
 };
 
-#endif // YCSB_C_COUNTDOWN_LATCH_H_
+#endif  // YCSB_C_COUNTDOWN_LATCH_H_
