@@ -49,6 +49,12 @@ const string CoreWorkload::FIELD_LENGTH_DISTRIBUTION_DEFAULT = "constant";
 const string CoreWorkload::FIELD_LENGTH_PROPERTY = "fieldlength";
 const string CoreWorkload::FIELD_LENGTH_DEFAULT = "100";
 
+const string CoreWorkload::TX_LENGTH_DISTRIBUTION_PROPERTY = "tx_len_dist";
+const string CoreWorkload::TX_LENGTH_DISTRIBUTION_DEFAULT = "constant";
+
+const string CoreWorkload::TX_LENGTH_PROPERTY = "txlength";
+const string CoreWorkload::TX_LENGTH_DEFAULT = "3";
+
 const string CoreWorkload::READ_ALL_FIELDS_PROPERTY = "readallfields";
 const string CoreWorkload::READ_ALL_FIELDS_DEFAULT = "true";
 
@@ -105,6 +111,7 @@ void CoreWorkload::Init(const utils::Properties &p) {
   field_count_ = std::stoi(p.GetProperty(FIELD_COUNT_PROPERTY, FIELD_COUNT_DEFAULT));
   field_prefix_ = p.GetProperty(FIELD_NAME_PREFIX, FIELD_NAME_PREFIX_DEFAULT);
   field_len_generator_ = GetFieldLenGenerator(p);
+  tx_len_generator_ = GetTxLenGenerator(p);
 
   double read_proportion = std::stod(p.GetProperty(READ_PROPORTION_PROPERTY,
                                                    READ_PROPORTION_DEFAULT));
@@ -206,6 +213,22 @@ ycsbc::Generator<uint64_t> *CoreWorkload::GetFieldLenGenerator(
   }
 }
 
+ycsbc::Generator<uint64_t> *CoreWorkload::GetTxLenGenerator(
+        const utils::Properties &p) {
+    string field_len_dist = p.GetProperty(TX_LENGTH_DISTRIBUTION_PROPERTY,
+                                          TX_LENGTH_DISTRIBUTION_DEFAULT);
+    int field_len = std::stoi(p.GetProperty(TX_LENGTH_PROPERTY, TX_LENGTH_DEFAULT));
+    if(field_len_dist == "constant") {
+        return new ConstGenerator(field_len);
+    } else if(field_len_dist == "uniform") {
+        return new UniformGenerator(1, field_len);
+    } else if(field_len_dist == "zipfian") {
+        return new ZipfianGenerator(1, field_len);
+    } else {
+        throw utils::Exception("Unknown field length distribution: " + field_len_dist);
+    }
+}
+
 std::string CoreWorkload::BuildKeyName(uint64_t key_num) {
   if (!ordered_inserts_) {
     key_num = utils::Hash(key_num);
@@ -255,6 +278,25 @@ bool CoreWorkload::DoInsert(DB &db) {
   std::vector<DB::Field> fields;
   BuildValues(fields);
   return db.Insert(table_name_, key, fields) == DB::kOK;
+}
+
+bool CoreWorkload::DoTx(DB &db) {
+    DB::Status status;
+    status = TransactionBegin(db);
+    if (status != DB::kOK) {
+        return false;
+    }
+
+    auto op_num = tx_len_generator_->Next();
+    for (unsigned long i = 0; i < op_num; i++) {
+        if (!DoTransaction(db)) {
+            TransactionAbort(db);
+            return false;
+        }
+    }
+
+    status = TransactionCommit(db);
+    return (status == DB::kOK);
 }
 
 bool CoreWorkload::DoTransaction(DB &db) {
@@ -350,6 +392,18 @@ DB::Status CoreWorkload::TransactionInsert(DB &db) {
   DB::Status s = db.Insert(table_name_, key, values);
   transaction_insert_key_sequence_->Acknowledge(key_num);
   return s;
+}
+
+DB::Status CoreWorkload::TransactionBegin(DB &db) {
+    return db.Begin();
+}
+
+DB::Status CoreWorkload::TransactionCommit(DB &db) {
+    return db.Commit();
+}
+
+DB::Status CoreWorkload::TransactionAbort(DB &db) {
+    return db.Abort();
 }
 
 } // ycsbc

@@ -28,7 +28,7 @@ inline int ClientThread(ycsbc::DB *db, ycsbc::CoreWorkload *wl, const int num_op
     if (is_loading) {
       wl->DoInsert(*db);
     } else {
-      wl->DoTransaction(*db);
+      wl->DoTx(*db);
     }
     ops++;
   }

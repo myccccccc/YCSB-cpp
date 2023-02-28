@@ -30,6 +30,7 @@ add_executable(ycsb ${PROJECT_SOURCE_DIR}/leveldb/leveldb_db.cc
                             ${PROJECT_SOURCE_DIR}/core/basic_db.cc
                             ${PROJECT_SOURCE_DIR}/core/core_workload.cc
                             ${PROJECT_SOURCE_DIR}/core/db_factory.cc
+                            ${PROJECT_SOURCE_DIR}/core/db.cc
                             ${PROJECT_SOURCE_DIR}/core/measurements.cc
                             ${PROJECT_SOURCE_DIR}/core/ycsbc.cc)
 

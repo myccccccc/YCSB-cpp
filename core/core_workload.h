@@ -66,6 +66,19 @@ class CoreWorkload {
   static const std::string FIELD_LENGTH_PROPERTY;
   static const std::string FIELD_LENGTH_DEFAULT;
 
+    ///
+    /// The name of the property for the field length distribution.
+    /// Options are "uniform", "zipfian" (favoring short records), and "constant".
+    ///
+    static const std::string TX_LENGTH_DISTRIBUTION_PROPERTY;
+    static const std::string TX_LENGTH_DISTRIBUTION_DEFAULT;
+
+    ///
+    /// The name of the property for the length of a field in bytes.
+    ///
+    static const std::string TX_LENGTH_PROPERTY;
+    static const std::string TX_LENGTH_DEFAULT;
+
   ///
   /// The name of the property for deciding whether to read one field (false)
   /// or all fields (true) of a record.
@@ -170,19 +183,21 @@ class CoreWorkload {
 
   virtual bool DoInsert(DB &db);
   virtual bool DoTransaction(DB &db);
+  virtual bool DoTx(DB &db);
 
   bool read_all_fields() const { return read_all_fields_; }
   bool write_all_fields() const { return write_all_fields_; }
 
   CoreWorkload() :
       field_count_(0), read_all_fields_(false), write_all_fields_(false),
-      field_len_generator_(nullptr), key_chooser_(nullptr), field_chooser_(nullptr),
+      field_len_generator_(nullptr), tx_len_generator_(nullptr), key_chooser_(nullptr), field_chooser_(nullptr),
       scan_len_chooser_(nullptr), insert_key_sequence_(nullptr),
       transaction_insert_key_sequence_(nullptr), ordered_inserts_(true), record_count_(0) {
   }
 
   virtual ~CoreWorkload() {
     delete field_len_generator_;
+    delete tx_len_generator_;
     delete key_chooser_;
     delete field_chooser_;
     delete scan_len_chooser_;
@@ -192,6 +207,7 @@ class CoreWorkload {
 
  protected:
   static Generator<uint64_t> *GetFieldLenGenerator(const utils::Properties &p);
+  static Generator<uint64_t> *GetTxLenGenerator(const utils::Properties &p);
   std::string BuildKeyName(uint64_t key_num);
   void BuildValues(std::vector<DB::Field> &values);
   void BuildSingleValue(std::vector<DB::Field> &update);
@@ -199,6 +215,9 @@ class CoreWorkload {
   uint64_t NextTransactionKeyNum();
   std::string NextFieldName();
 
+  DB::Status TransactionBegin(DB &db);
+  DB::Status TransactionCommit(DB &db);
+  DB::Status TransactionAbort(DB &db);
   DB::Status TransactionRead(DB &db);
   DB::Status TransactionReadModifyWrite(DB &db);
   DB::Status TransactionScan(DB &db);
@@ -211,6 +230,7 @@ class CoreWorkload {
   bool read_all_fields_;
   bool write_all_fields_;
   Generator<uint64_t> *field_len_generator_;
+  Generator<uint64_t> *tx_len_generator_;
   DiscreteGenerator<Operation> op_chooser_;
   Generator<uint64_t> *key_chooser_; // transaction key gen
   Generator<uint64_t> *field_chooser_;
