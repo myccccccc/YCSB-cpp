@@ -321,22 +321,32 @@ out:
 }
 
 bool CoreWorkload::DoTx(DB &db) {
+    unsigned long op_num;
     DB::Status status;
     status = TransactionBegin(db);
     if (status != DB::kOK) {
-        return false;
+        goto out;
     }
 
-    auto op_num = tx_len_generator_->Next();
+    op_num = tx_len_generator_->Next();
     for (unsigned long i = 0; i < op_num; i++) {
         if (!DoTransaction(db)) {
-            TransactionAbort(db);
-            return false;
+            goto abort;
         }
     }
 
     status = TransactionCommit(db);
-    return (status == DB::kOK);
+    if (status != DB::kOK) {
+        goto abort;
+    } else {
+        goto out;
+    }
+
+abort:
+    TransactionAbort(db);
+
+out:
+    return status == DB::kOK;
 }
 
 bool CoreWorkload::DoTransaction(DB &db) {
