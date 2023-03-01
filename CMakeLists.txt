@@ -26,13 +26,14 @@ set(CMAKE_CPP_FLAGS "${CMAKE_CPP_FLAGS} -DHDRMEASUREMENT")
 include_directories(${PROJECT_SOURCE_DIR}/)
 
 add_executable(ycsb ${PROJECT_SOURCE_DIR}/leveldb/leveldb_db.cc
-                            ${PROJECT_SOURCE_DIR}/core/acknowledged_counter_generator.cc
-                            ${PROJECT_SOURCE_DIR}/core/basic_db.cc
-                            ${PROJECT_SOURCE_DIR}/core/core_workload.cc
-                            ${PROJECT_SOURCE_DIR}/core/db_factory.cc
-                            ${PROJECT_SOURCE_DIR}/core/db.cc
-                            ${PROJECT_SOURCE_DIR}/core/measurements.cc
-                            ${PROJECT_SOURCE_DIR}/core/ycsbc.cc)
+                    ${PROJECT_SOURCE_DIR}/azino/azino_db.cc
+                    ${PROJECT_SOURCE_DIR}/core/acknowledged_counter_generator.cc
+                    ${PROJECT_SOURCE_DIR}/core/basic_db.cc
+                    ${PROJECT_SOURCE_DIR}/core/core_workload.cc
+                    ${PROJECT_SOURCE_DIR}/core/db_factory.cc
+                    ${PROJECT_SOURCE_DIR}/core/db.cc
+                    ${PROJECT_SOURCE_DIR}/core/measurements.cc
+                    ${PROJECT_SOURCE_DIR}/core/ycsbc.cc)
 
 target_link_libraries(ycsb
 #        pthread
