@@ -43,6 +43,8 @@ class Azino : public DB {
    private:
     void SerializeRow(const std::vector<Field> &values, std::string *data);
     void DeserializeRow(std::vector<Field> *values, const std::string &data);
+
+    azino::Transaction *tx;
 };
 
 DB *NewAzino();

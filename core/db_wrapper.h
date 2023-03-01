@@ -87,6 +87,42 @@ class DBWrapper : public DB {
         return s;
     }
 
+    virtual Status Begin() {
+        timer_.Start();
+        Status s = db_->Begin();
+        uint64_t elapsed = timer_.End();
+        if (s == kOK) {
+            measurements_->Report(BEGIN, elapsed);
+        } else {
+            measurements_->Report(BEGIN_FAILED, elapsed);
+        }
+        return s;
+    }
+
+    virtual Status Commit() {
+        timer_.Start();
+        Status s = db_->Commit();
+        uint64_t elapsed = timer_.End();
+        if (s == kOK) {
+            measurements_->Report(COMMIT, elapsed);
+        } else {
+            measurements_->Report(COMMIT_FAILED, elapsed);
+        }
+        return s;
+    }
+
+    virtual Status Abort() {
+        timer_.Start();
+        Status s = db_->Abort();
+        uint64_t elapsed = timer_.End();
+        if (s == kOK) {
+            measurements_->Report(ABORT, elapsed);
+        } else {
+            measurements_->Report(ABORT_FAILED, elapsed);
+        }
+        return s;
+    }
+
    private:
     DB *db_;
     Measurements *measurements_;

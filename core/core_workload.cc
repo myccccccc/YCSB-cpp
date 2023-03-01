@@ -24,18 +24,16 @@ using std::string;
 using ycsbc::CoreWorkload;
 
 const char *ycsbc::kOperationString[ycsbc::MAXOPTYPE] = {
-    "INSERT",
-    "READ",
-    "UPDATE",
-    "SCAN",
-    "READMODIFYWRITE",
-    "DELETE",
-    "INSERT-FAILED",
-    "READ-FAILED",
-    "UPDATE-FAILED",
-    "SCAN-FAILED",
-    "READMODIFYWRITE-FAILED",
-    "DELETE-FAILED"};
+    "INSERT",          "READ",
+    "UPDATE",          "SCAN",
+    "READMODIFYWRITE", "DELETE",
+    "BEGIN",           "COMMIT",
+    "ABORT",           "INSERT-FAILED",
+    "READ-FAILED",     "UPDATE-FAILED",
+    "SCAN-FAILED",     "READMODIFYWRITE-FAILED",
+    "DELETE-FAILED",   "BEGIN_FAILED",
+    "COMMIT_FAILED",   "ABORT_FAILED",
+};
 
 const string CoreWorkload::TABLENAME_PROPERTY = "table";
 const string CoreWorkload::TABLENAME_DEFAULT = "usertable";

@@ -2,8 +2,6 @@
 
 #include "core/db_factory.h"
 
-thread_local azino::Transaction *tx = nullptr;
-
 namespace {
 const std::string TXPLANNER_ADDR = "azino.txplanner_addr";
 const std::string TXPLANNER_ADDR_DEFAULT = "0.0.0.0:8001";
@@ -11,7 +9,7 @@ const std::string TXPLANNER_ADDR_DEFAULT = "0.0.0.0:8001";
 
 namespace ycsbc {
 
-Azino::Azino() {}
+Azino::Azino() : tx(nullptr) {}
 
 Azino::~Azino() {}
 
