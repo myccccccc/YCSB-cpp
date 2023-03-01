@@ -9,6 +9,7 @@
 #include "core_workload.h"
 
 #include <algorithm>
+#include <iostream>
 #include <random>
 #include <string>
 
@@ -408,7 +409,7 @@ bool CoreWorkload::DoTransaction(DB &db, OpSeq &op_seq, size_t index) {
             throw utils::Exception("Operation request is not recognized!");
     }
 
-    if (index < op_seq.size()) {
+    if (index == op_seq.size()) {
         op_seq.push_back(op);
     }
 
