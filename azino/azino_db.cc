@@ -9,20 +9,23 @@ const std::string TXPLANNER_ADDR_DEFAULT = "0.0.0.0:8001";
 
 namespace ycsbc {
 
-Azino::Azino() : tx(nullptr) {}
+Azino::Azino() : tx_(nullptr) {}
 
 Azino::~Azino() {}
 
-void Azino::Init() {
+void Azino::InitOptions() {
     const utils::Properties &props = *props_;
-    const std::string &txplanner_addr =
-        props.GetProperty(TXPLANNER_ADDR, TXPLANNER_ADDR_DEFAULT);
 
-    azino::Options options;
-    tx = new azino::Transaction(options, txplanner_addr);
+    opt_.txplanner_addr =
+        props.GetProperty(TXPLANNER_ADDR, TXPLANNER_ADDR_DEFAULT);
 }
 
-void Azino::Cleanup() { delete tx; }
+void Azino::Init() {
+    InitOptions();
+    tx_ = new azino::Transaction(opt_);
+}
+
+void Azino::Cleanup() { delete tx_; }
 
 DB::Status Azino::Read(const std::string &table, const std::string &key,
                        const std::vector<std::string> *fields,
@@ -43,7 +46,10 @@ DB::Status Azino::Update(const std::string &table, const std::string &key,
 
 DB::Status Azino::Insert(const std::string &table, const std::string &key,
                          std::vector<Field> &values) {
-    return DB::kNotImplemented;
+    std::string data;
+    SerializeRow(values, &data);
+    auto sts = tx_->Put(wopt_, key, data);
+    return sts.IsOk() ? kOK : kError;
 }
 
 DB::Status Azino::Delete(const std::string &table, const std::string &key) {
@@ -56,8 +62,8 @@ void Azino::DeserializeRow(std::vector<Field> *values,
                            const std::string &data) {}
 
 DB::Status Azino::Begin() {
-    tx->Reset();
-    auto sts = tx->Begin();
+    tx_->Reset();
+    auto sts = tx_->Begin();
     if (!sts.IsOk()) {
         throw utils::Exception(std::string("Azino Begin: ") + sts.ToString());
     }
@@ -65,7 +71,7 @@ DB::Status Azino::Begin() {
 }
 
 DB::Status Azino::Commit() {
-    auto sts = tx->Commit();
+    auto sts = tx_->Commit();
     if (!sts.IsOk()) {
         return kError;
     } else {
@@ -74,7 +80,7 @@ DB::Status Azino::Commit() {
 }
 
 DB::Status Azino::Abort() {
-    auto sts = tx->Abort();
+    auto sts = tx_->Abort();
     if (!sts.IsOk()) {
         throw utils::Exception(std::string("Azino Abort: ") + sts.ToString());
     }

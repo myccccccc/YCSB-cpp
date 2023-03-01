@@ -41,10 +41,14 @@ class Azino : public DB {
     Status Delete(const std::string &table, const std::string &key);
 
    private:
+    void InitOptions();
     void SerializeRow(const std::vector<Field> &values, std::string *data);
     void DeserializeRow(std::vector<Field> *values, const std::string &data);
 
-    azino::Transaction *tx;
+    azino::Transaction *tx_;
+    azino::Options opt_;
+    azino::WriteOptions wopt_;
+    azino::ReadOptions ropt_;
 };
 
 DB *NewAzino();
