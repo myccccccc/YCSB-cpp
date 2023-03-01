@@ -108,6 +108,12 @@ const string CoreWorkload::OPERATION_COUNT_PROPERTY = "operationcount";
 const std::string CoreWorkload::FIELD_NAME_PREFIX = "fieldnameprefix";
 const std::string CoreWorkload::FIELD_NAME_PREFIX_DEFAULT = "field";
 
+const std::string CoreWorkload::RETRY_TX = "retrytx";
+const std::string CoreWorkload::RETRY_TX_DEFAULT = "true";
+
+const std::string CoreWorkload::MAX_RETRY_TX_COUNT = "maxretrytxcount";
+const std::string CoreWorkload::MAX_RETRY_TX_COUNT_DEFAULT = "10";
+
 namespace ycsbc {
 
 void CoreWorkload::Init(const utils::Properties &p) {
@@ -212,6 +218,15 @@ void CoreWorkload::Init(const utils::Properties &p) {
         throw utils::Exception("Distribution not allowed for scan length: " +
                                scan_len_dist);
     }
+
+    if (p.GetProperty(RETRY_TX, RETRY_TX_DEFAULT) == "true") {
+        retry_tx_ = true;
+    } else {
+        retry_tx_ = false;
+    }
+
+    max_retry_tx_count_ = std::stoi(
+        p.GetProperty(MAX_RETRY_TX_COUNT, MAX_RETRY_TX_COUNT_DEFAULT));
 }
 
 ycsbc::Generator<uint64_t> *CoreWorkload::GetFieldLenGenerator(
@@ -321,16 +336,26 @@ out:
 }
 
 bool CoreWorkload::DoTx(DB &db) {
-    unsigned long op_num;
+    int retry_count = 0;
+    uint64_t op_num = 0;
+    OpSeq op_seq;
     DB::Status status;
+
+retry:
+    if (retry_count > max_retry_tx_count()) {
+        goto out;
+    }
     status = TransactionBegin(db);
     if (status != DB::kOK) {
         goto out;
     }
 
-    op_num = tx_len_generator_->Next();
+    if (op_num == 0) {
+        op_num = tx_len_generator_->Next();
+    }
+
     for (unsigned long i = 0; i < op_num; i++) {
-        if (!DoTransaction(db)) {
+        if (!DoTransaction(db, op_seq, i)) {
             goto abort;
         }
     }
@@ -344,37 +369,53 @@ bool CoreWorkload::DoTx(DB &db) {
 
 abort:
     TransactionAbort(db);
+    if (retry_tx()) {
+        retry_count++;
+        goto retry;
+    }
 
 out:
     return status == DB::kOK;
 }
 
-bool CoreWorkload::DoTransaction(DB &db) {
+bool CoreWorkload::DoTransaction(DB &db, OpSeq &op_seq, size_t index) {
     DB::Status status;
-    switch (op_chooser_.Next()) {
+    Op op;
+    if (index < op_seq.size()) {
+        op = op_seq[index];
+    } else {
+        op.first = op_chooser_.Next();
+        op.second = NextTransactionKeyNum();
+    }
+
+    switch (op.first) {
         case READ:
-            status = TransactionRead(db);
+            status = TransactionRead(db, op.second);
             break;
         case UPDATE:
-            status = TransactionUpdate(db);
+            status = TransactionUpdate(db, op.second);
             break;
         case INSERT:
-            status = TransactionInsert(db);
+            status = TransactionInsert(db, op.second);
             break;
         case SCAN:
-            status = TransactionScan(db);
+            status = TransactionScan(db, op.second);
             break;
         case READMODIFYWRITE:
-            status = TransactionReadModifyWrite(db);
+            status = TransactionReadModifyWrite(db, op.second);
             break;
         default:
             throw utils::Exception("Operation request is not recognized!");
     }
+
+    if (index < op_seq.size()) {
+        op_seq.push_back(op);
+    }
+
     return (status == DB::kOK);
 }
 
-DB::Status CoreWorkload::TransactionRead(DB &db) {
-    uint64_t key_num = NextTransactionKeyNum();
+DB::Status CoreWorkload::TransactionRead(DB &db, uint64_t key_num) {
     const std::string key = BuildKeyName(key_num);
     std::vector<DB::Field> result;
     if (!read_all_fields()) {
@@ -386,8 +427,7 @@ DB::Status CoreWorkload::TransactionRead(DB &db) {
     }
 }
 
-DB::Status CoreWorkload::TransactionReadModifyWrite(DB &db) {
-    uint64_t key_num = NextTransactionKeyNum();
+DB::Status CoreWorkload::TransactionReadModifyWrite(DB &db, uint64_t key_num) {
     const std::string key = BuildKeyName(key_num);
     std::vector<DB::Field> result;
 
@@ -408,8 +448,7 @@ DB::Status CoreWorkload::TransactionReadModifyWrite(DB &db) {
     return db.Update(table_name_, key, values);
 }
 
-DB::Status CoreWorkload::TransactionScan(DB &db) {
-    uint64_t key_num = NextTransactionKeyNum();
+DB::Status CoreWorkload::TransactionScan(DB &db, uint64_t key_num) {
     const std::string key = BuildKeyName(key_num);
     int len = scan_len_chooser_->Next();
     std::vector<std::vector<DB::Field>> result;
@@ -422,8 +461,7 @@ DB::Status CoreWorkload::TransactionScan(DB &db) {
     }
 }
 
-DB::Status CoreWorkload::TransactionUpdate(DB &db) {
-    uint64_t key_num = NextTransactionKeyNum();
+DB::Status CoreWorkload::TransactionUpdate(DB &db, uint64_t key_num) {
     const std::string key = BuildKeyName(key_num);
     std::vector<DB::Field> values;
     if (write_all_fields()) {
@@ -434,8 +472,7 @@ DB::Status CoreWorkload::TransactionUpdate(DB &db) {
     return db.Update(table_name_, key, values);
 }
 
-DB::Status CoreWorkload::TransactionInsert(DB &db) {
-    uint64_t key_num = transaction_insert_key_sequence_->Next();
+DB::Status CoreWorkload::TransactionInsert(DB &db, uint64_t key_num) {
     const std::string key = BuildKeyName(key_num);
     std::vector<DB::Field> values;
     BuildValues(values);

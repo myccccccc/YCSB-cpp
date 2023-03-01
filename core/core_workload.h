@@ -187,6 +187,12 @@ class CoreWorkload {
     static const std::string FIELD_NAME_PREFIX;
     static const std::string FIELD_NAME_PREFIX_DEFAULT;
 
+    static const std::string RETRY_TX;
+    static const std::string RETRY_TX_DEFAULT;
+
+    static const std::string MAX_RETRY_TX_COUNT;
+    static const std::string MAX_RETRY_TX_COUNT_DEFAULT;
+
     ///
     /// Initialize the scenario.
     /// Called once, in the main client thread, before any operations are
@@ -194,10 +200,14 @@ class CoreWorkload {
     ///
     virtual void Init(const utils::Properties &p);
 
+    typedef std::pair<Operation, uint64_t> Op;
+    typedef std::vector<Op> OpSeq;
     virtual bool DoBatchInsert(int batch_count, DB &db);
-    virtual bool DoTransaction(DB &db);
+    virtual bool DoTransaction(DB &db, OpSeq &seq, size_t index);
     virtual bool DoTx(DB &db);
 
+    bool retry_tx() { return retry_tx_; }
+    int max_retry_tx_count() { return max_retry_tx_count_; }
     bool read_all_fields() const { return read_all_fields_; }
     bool write_all_fields() const { return write_all_fields_; }
     int insert_batch_count() const { return insert_batch_count_; }
@@ -240,11 +250,11 @@ class CoreWorkload {
     DB::Status TransactionBegin(DB &db);
     DB::Status TransactionCommit(DB &db);
     DB::Status TransactionAbort(DB &db);
-    DB::Status TransactionRead(DB &db);
-    DB::Status TransactionReadModifyWrite(DB &db);
-    DB::Status TransactionScan(DB &db);
-    DB::Status TransactionUpdate(DB &db);
-    DB::Status TransactionInsert(DB &db);
+    DB::Status TransactionRead(DB &db, uint64_t key_num);
+    DB::Status TransactionReadModifyWrite(DB &db, uint64_t key_num);
+    DB::Status TransactionScan(DB &db, uint64_t key_num);
+    DB::Status TransactionUpdate(DB &db, uint64_t key_num);
+    DB::Status TransactionInsert(DB &db, uint64_t key_num);
 
     std::string table_name_;
     int field_count_;
@@ -264,6 +274,8 @@ class CoreWorkload {
     int insert_batch_count_;
     size_t record_count_;
     int zero_padding_;
+    bool retry_tx_;
+    int max_retry_tx_count_;
 };
 
 }  // namespace ycsbc
