@@ -41,11 +41,12 @@ enum Operation {
     BEGIN_FAILED,
     COMMIT_FAILED,
     ABORT_FAILED,
+    RETRY,
     MAXOPTYPE
 };
 
 extern const char *kOperationString[MAXOPTYPE];
-
+class Measurements;
 class CoreWorkload {
    public:
     ///
@@ -199,6 +200,7 @@ class CoreWorkload {
     /// started.
     ///
     virtual void Init(const utils::Properties &p);
+    virtual void SetMeasurements(Measurements *measurements);
 
     typedef std::pair<Operation, uint64_t> Op;
     typedef std::vector<Op> OpSeq;
@@ -276,6 +278,7 @@ class CoreWorkload {
     int zero_padding_;
     bool retry_tx_;
     int max_retry_tx_count_;
+    Measurements *measurements_;
 };
 
 }  // namespace ycsbc

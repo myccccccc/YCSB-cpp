@@ -14,6 +14,7 @@
 #include <string>
 
 #include "const_generator.h"
+#include "measurements.h"
 #include "random_byte_generator.h"
 #include "scrambled_zipfian_generator.h"
 #include "skewed_latest_generator.h"
@@ -25,16 +26,25 @@ using std::string;
 using ycsbc::CoreWorkload;
 
 const char *ycsbc::kOperationString[ycsbc::MAXOPTYPE] = {
-    "INSERT",          "READ",
-    "UPDATE",          "SCAN",
-    "READMODIFYWRITE", "DELETE",
-    "BEGIN",           "COMMIT",
-    "ABORT",           "INSERT-FAILED",
-    "READ-FAILED",     "UPDATE-FAILED",
-    "SCAN-FAILED",     "READMODIFYWRITE-FAILED",
-    "DELETE-FAILED",   "BEGIN_FAILED",
-    "COMMIT_FAILED",   "ABORT_FAILED",
-};
+    "INSERT",
+    "READ",
+    "UPDATE",
+    "SCAN",
+    "READMODIFYWRITE",
+    "DELETE",
+    "BEGIN",
+    "COMMIT",
+    "ABORT",
+    "INSERT-FAILED",
+    "READ-FAILED",
+    "UPDATE-FAILED",
+    "SCAN-FAILED",
+    "READMODIFYWRITE-FAILED",
+    "DELETE-FAILED",
+    "BEGIN_FAILED",
+    "COMMIT_FAILED",
+    "ABORT_FAILED",
+    "RETRY"};
 
 const string CoreWorkload::TABLENAME_PROPERTY = "table";
 const string CoreWorkload::TABLENAME_DEFAULT = "usertable";
@@ -116,6 +126,9 @@ const std::string CoreWorkload::MAX_RETRY_TX_COUNT = "maxretrytxcount";
 const std::string CoreWorkload::MAX_RETRY_TX_COUNT_DEFAULT = "10";
 
 namespace ycsbc {
+void CoreWorkload::SetMeasurements(Measurements *measurements) {
+    measurements_ = measurements;
+}
 
 void CoreWorkload::Init(const utils::Properties &p) {
     table_name_ = p.GetProperty(TABLENAME_PROPERTY, TABLENAME_DEFAULT);
@@ -343,9 +356,6 @@ bool CoreWorkload::DoTx(DB &db) {
     DB::Status status;
 
 retry:
-    if (retry_count > max_retry_tx_count()) {
-        goto out;
-    }
     status = TransactionBegin(db);
     if (status != DB::kOK) {
         goto out;
@@ -370,7 +380,8 @@ retry:
 
 abort:
     TransactionAbort(db);
-    if (retry_tx()) {
+    if (retry_tx() && retry_count < max_retry_tx_count()) {
+        measurements_->Report(RETRY, op_seq.size());
         retry_count++;
         goto retry;
     }
@@ -387,6 +398,7 @@ bool CoreWorkload::DoTransaction(DB &db, OpSeq &op_seq, size_t index) {
     } else {
         op.first = op_chooser_.Next();
         op.second = NextTransactionKeyNum();
+        op_seq.push_back(op);
     }
 
     switch (op.first) {
@@ -407,10 +419,6 @@ bool CoreWorkload::DoTransaction(DB &db, OpSeq &op_seq, size_t index) {
             break;
         default:
             throw utils::Exception("Operation request is not recognized!");
-    }
-
-    if (index == op_seq.size()) {
-        op_seq.push_back(op);
     }
 
     return (status == DB::kOK);

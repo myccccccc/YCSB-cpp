@@ -84,6 +84,7 @@ int main(const int argc, const char *argv[]) {
 
     ycsbc::CoreWorkload wl;
     wl.Init(props);
+    wl.SetMeasurements(measurements);
 
     const bool show_status = (props.GetProperty("status", "false") == "true");
     const int status_interval =
