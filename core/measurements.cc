@@ -54,18 +54,36 @@ std::string BasicMeasurements::GetStatusMsg() {
         Operation op = static_cast<Operation>(i);
         uint64_t cnt = count_[op].load(std::memory_order_relaxed);
         if (cnt == 0) continue;
-        msg_stream << " [" << kOperationString[op] << ":"
-                   << " Count=" << cnt << " Max="
-                   << latency_max_[op].load(std::memory_order_relaxed) / 1000.0
-                   << " Min="
-                   << latency_min_[op].load(std::memory_order_relaxed) / 1000.0
-                   << " Avg="
-                   << ((cnt > 0) ? static_cast<double>(latency_sum_[op].load(
-                                       std::memory_order_relaxed)) /
-                                       cnt
-                                 : 0) /
-                          1000.0
-                   << "]";
+        if (op == RETRY) {
+            msg_stream << " [" << kOperationString[op] << ":"
+                       << " Count=" << cnt << " Max="
+                       << latency_max_[op].load(std::memory_order_relaxed)
+                       << " Min="
+                       << latency_min_[op].load(std::memory_order_relaxed)
+                       << " Avg="
+                       << ((cnt > 0)
+                               ? static_cast<double>(latency_sum_[op].load(
+                                     std::memory_order_relaxed)) /
+                                     cnt
+                               : 0)
+                       << "]";
+        } else {
+            msg_stream << " [" << kOperationString[op] << ":"
+                       << " Count=" << cnt << " Max="
+                       << latency_max_[op].load(std::memory_order_relaxed) /
+                              1000.0
+                       << " Min="
+                       << latency_min_[op].load(std::memory_order_relaxed) /
+                              1000.0
+                       << " Avg="
+                       << ((cnt > 0)
+                               ? static_cast<double>(latency_sum_[op].load(
+                                     std::memory_order_relaxed)) /
+                                     cnt
+                               : 0) /
+                              1000.0
+                       << "]";
+        }
         total_cnt += cnt;
     }
     return std::to_string(total_cnt) + msg_stream.str();
