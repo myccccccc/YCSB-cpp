@@ -99,6 +99,9 @@ const string CoreWorkload::INSERT_ORDER_DEFAULT = "hashed";
 const string CoreWorkload::INSERT_START_PROPERTY = "insertstart";
 const string CoreWorkload::INSERT_START_DEFAULT = "0";
 
+const string CoreWorkload::INSERT_BATCH_COUNT_PROPERTY = "insertbatchcount";
+const string CoreWorkload::INSERT_BATCH_COUNT_PROPERTY_DEFAULT = "1";
+
 const string CoreWorkload::RECORD_COUNT_PROPERTY = "recordcount";
 const string CoreWorkload::OPERATION_COUNT_PROPERTY = "operationcount";
 
@@ -154,6 +157,8 @@ void CoreWorkload::Init(const utils::Properties &p) {
     } else {
         ordered_inserts_ = true;
     }
+    insert_batch_count_ = std::stoi(p.GetProperty(
+        INSERT_BATCH_COUNT_PROPERTY, INSERT_BATCH_COUNT_PROPERTY_DEFAULT));
 
     if (read_proportion > 0) {
         op_chooser_.AddValue(READ, read_proportion);
@@ -292,11 +297,27 @@ std::string CoreWorkload::NextFieldName() {
         .append(std::to_string(field_chooser_->Next()));
 }
 
-bool CoreWorkload::DoInsert(DB &db) {
-    const std::string key = BuildKeyName(insert_key_sequence_->Next());
-    std::vector<DB::Field> fields;
-    BuildValues(fields);
-    return db.Insert(table_name_, key, fields) == DB::kOK;
+bool CoreWorkload::DoBatchInsert(int batch_count, DB &db) {
+    DB::Status sts;
+    sts = db.Begin();
+    if (sts != DB::kOK) {
+        goto out;
+    }
+
+    for (int i = 0; i < batch_count; i++) {
+        const std::string key = BuildKeyName(insert_key_sequence_->Next());
+        std::vector<DB::Field> fields;
+        BuildValues(fields);
+        sts = db.Insert(table_name_, key, fields);
+        if (sts != DB::kOK) {
+            goto out;
+        }
+    }
+
+    sts = db.Commit();
+
+out:
+    return sts == DB::kOK;
 }
 
 bool CoreWorkload::DoTx(DB &db) {

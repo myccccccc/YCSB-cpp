@@ -44,6 +44,12 @@ class Azino : public DB {
     void InitOptions();
     void SerializeRow(const std::vector<Field> &values, std::string *data);
     void DeserializeRow(std::vector<Field> *values, const std::string &data);
+    void DeserializeRowFilter(std::vector<Field> *values,
+                              const std::string &data,
+                              const std::vector<std::string> &fields);
+
+    Status Upsert(const std::string &table, const std::string &key,
+                  std::vector<Field> &values);
 
     azino::Transaction *tx_;
     azino::Options opt_;

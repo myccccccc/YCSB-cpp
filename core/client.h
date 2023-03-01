@@ -26,13 +26,24 @@ inline int ClientThread(ycsbc::DB *db, ycsbc::CoreWorkload *wl,
     }
 
     int ops = 0;
-    for (int i = 0; i < num_ops; ++i) {
-        if (is_loading) {
-            wl->DoInsert(*db);
-        } else {
-            wl->DoTx(*db);
+    if (is_loading) {
+        for (int i = 0; i < num_ops;) {
+            int batch_count = 0;
+            if (i + wl->insert_batch_count() > num_ops) {
+                batch_count = num_ops - i;
+            } else {
+                batch_count = wl->insert_batch_count();
+            }
+
+            wl->DoBatchInsert(batch_count, *db);
+            ops += batch_count;
+            i += batch_count;
         }
-        ops++;
+    } else {
+        for (int i = 0; i < num_ops; ++i) {
+            wl->DoTx(*db);
+            ops++;
+        }
     }
 
     if (cleanup_db) {

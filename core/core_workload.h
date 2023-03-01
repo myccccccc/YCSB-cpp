@@ -175,6 +175,9 @@ class CoreWorkload {
     static const std::string INSERT_START_PROPERTY;
     static const std::string INSERT_START_DEFAULT;
 
+    static const std::string INSERT_BATCH_COUNT_PROPERTY;
+    static const std::string INSERT_BATCH_COUNT_PROPERTY_DEFAULT;
+
     static const std::string RECORD_COUNT_PROPERTY;
     static const std::string OPERATION_COUNT_PROPERTY;
 
@@ -191,12 +194,13 @@ class CoreWorkload {
     ///
     virtual void Init(const utils::Properties &p);
 
-    virtual bool DoInsert(DB &db);
+    virtual bool DoBatchInsert(int batch_count, DB &db);
     virtual bool DoTransaction(DB &db);
     virtual bool DoTx(DB &db);
 
     bool read_all_fields() const { return read_all_fields_; }
     bool write_all_fields() const { return write_all_fields_; }
+    int insert_batch_count() const { return insert_batch_count_; }
 
     CoreWorkload()
         : field_count_(0),
@@ -257,6 +261,7 @@ class CoreWorkload {
     AcknowledgedCounterGenerator
         *transaction_insert_key_sequence_;  // transaction insert key gen
     bool ordered_inserts_;
+    int insert_batch_count_;
     size_t record_count_;
     int zero_padding_;
 };
