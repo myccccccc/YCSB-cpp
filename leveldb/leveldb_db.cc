@@ -500,7 +500,7 @@ DB::Status LeveldbDB::DeleteCompKey(const std::string &table,
     return kOK;
 }
 
-DB *NewLeveldbDB() { return new LeveldbDB; }
+DB *NewLeveldbDB(utils::Properties *props) { return new LeveldbDB(props); }
 
 const bool registered = DBFactory::RegisterDB("leveldb", NewLeveldbDB);
 

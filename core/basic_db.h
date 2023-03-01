@@ -20,6 +20,7 @@ namespace ycsbc {
 
 class BasicDB : public DB {
    public:
+    BasicDB(utils::Properties *props);
     void Init();
 
     Status Read(const std::string &table, const std::string &key,

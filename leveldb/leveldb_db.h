@@ -25,7 +25,7 @@ namespace ycsbc {
 
 class LeveldbDB : public DB {
    public:
-    LeveldbDB() {}
+    LeveldbDB(utils::Properties *props) { props_ = props; }
     ~LeveldbDB() {}
 
     void Init();

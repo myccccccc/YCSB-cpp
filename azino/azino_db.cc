@@ -1,5 +1,7 @@
 #include "azino_db.h"
 
+#include <butil/logging.h>
+
 #include "core/db_factory.h"
 
 namespace {
@@ -8,11 +10,33 @@ const std::string TXPLANNER_ADDR_DEFAULT = "0.0.0.0:8001";
 
 const std::string WRITE_TYPE = "azino.write_type";
 const std::string WRITE_TYPE_DEFAULT = "auto";
+
+const std::string LOG_FILE = "azino.log_file";
+const std::string LOG_FILE_DEFAULT = "log_ycsb_azino";
+
+const std::string MIN_LOG_LEVEL = "azino.minloglevel";
+const std::string MIN_LOG_LEVEL_DEFAULT = "0";
 }  // namespace
+
+namespace logging {
+DECLARE_int32(minloglevel);
+}
 
 namespace ycsbc {
 
-Azino::Azino() : tx_(nullptr) {}
+Azino::Azino(utils::Properties *props) : tx_(nullptr) {
+    props_ = props;
+
+    logging::FLAGS_minloglevel =
+        std::stoi(props->GetProperty(MIN_LOG_LEVEL, MIN_LOG_LEVEL_DEFAULT));
+    logging::LoggingSettings log_settings;
+    log_settings.logging_dest = logging::LoggingDestination::LOG_TO_FILE;
+    log_settings.log_file =
+        props->GetProperty(LOG_FILE, LOG_FILE_DEFAULT).c_str();
+    log_settings.delete_old =
+        logging::OldFileDeletionState::DELETE_OLD_LOG_FILE;
+    logging::InitLogging(log_settings);
+}
 
 Azino::~Azino() {}
 
@@ -169,7 +193,7 @@ DB::Status Azino::Abort() {
     return kOK;
 }
 
-DB *NewAzino() { return new Azino; }
+DB *NewAzino(utils::Properties *props) { return new Azino(props); }
 
 const bool registered = DBFactory::RegisterDB("azino", NewAzino);
 }  // namespace ycsbc

@@ -20,7 +20,7 @@ namespace ycsbc {
 
 class DBFactory {
    public:
-    using DBCreator = DB *(*)();
+    using DBCreator = DB *(*)(utils::Properties *props);
     static bool RegisterDB(std::string db_name, DBCreator db_creator);
     static DB *CreateDB(utils::Properties *props, Measurements *measurements);
 

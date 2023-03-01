@@ -14,7 +14,7 @@ namespace ycsbc {
 
 class Azino : public DB {
    public:
-    Azino();
+    Azino(utils::Properties *props);
     ~Azino();
 
     void Init();

@@ -102,8 +102,6 @@ class DB {
 
     virtual ~DB() {}
 
-    void SetProps(utils::Properties *props) { props_ = props; }
-
    protected:
     utils::Properties *props_;
 };

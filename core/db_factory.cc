@@ -28,8 +28,7 @@ DB *DBFactory::CreateDB(utils::Properties *props, Measurements *measurements) {
     DB *db = nullptr;
     std::map<std::string, DBCreator> &registry = Registry();
     if (registry.find(db_name) != registry.end()) {
-        DB *new_db = (*registry[db_name])();
-        new_db->SetProps(props);
+        DB *new_db = (*registry[db_name])(props);
         db = new DBWrapper(new_db, measurements);
     }
     return db;
