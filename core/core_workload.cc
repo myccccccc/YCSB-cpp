@@ -288,13 +288,7 @@ std::string CoreWorkload::BuildKeyName(uint64_t key_num) {
     //    int fill = std::max(0, zero_padding_ -
     //    static_cast<int>(value.size())); return prekey.append(fill,
     //    '0').append(value);
-    std::string res;
-    std::string key_num_string = std::to_string(key_num);
-    std::string record_count_string = std::to_string(record_count_);
-    int fill = std::max(0, static_cast<int>(record_count_string.size()) -
-                               static_cast<int>(key_num_string.size()));
-    res.append(fill, '0').append(key_num_string);
-    return res;
+    return std::to_string(key_num);
 }
 
 void CoreWorkload::BuildValues(std::vector<ycsbc::DB::Field> &values) {
