@@ -194,6 +194,9 @@ class CoreWorkload {
     static const std::string MAX_RETRY_TX_COUNT;
     static const std::string MAX_RETRY_TX_COUNT_DEFAULT;
 
+    static const std::string BENCH_SECONDS;
+    static const std::string BENCH_SECONDS_DEFAULT;
+
     ///
     /// Initialize the scenario.
     /// Called once, in the main client thread, before any operations are
@@ -213,6 +216,7 @@ class CoreWorkload {
     bool read_all_fields() const { return read_all_fields_; }
     bool write_all_fields() const { return write_all_fields_; }
     int insert_batch_count() const { return insert_batch_count_; }
+    int bench_seconds() { return bench_seconds_; }
 
     CoreWorkload()
         : field_count_(0),
@@ -279,6 +283,7 @@ class CoreWorkload {
     bool retry_tx_;
     int max_retry_tx_count_;
     Measurements *measurements_;
+    int bench_seconds_;
 };
 
 }  // namespace ycsbc

@@ -125,6 +125,9 @@ const std::string CoreWorkload::RETRY_TX_DEFAULT = "true";
 const std::string CoreWorkload::MAX_RETRY_TX_COUNT = "maxretrytxcount";
 const std::string CoreWorkload::MAX_RETRY_TX_COUNT_DEFAULT = "10";
 
+const std::string CoreWorkload::BENCH_SECONDS = "benchseconds";
+const std::string CoreWorkload::BENCH_SECONDS_DEFAULT = "15";
+
 namespace ycsbc {
 void CoreWorkload::SetMeasurements(Measurements *measurements) {
     measurements_ = measurements;
@@ -241,6 +244,9 @@ void CoreWorkload::Init(const utils::Properties &p) {
 
     max_retry_tx_count_ = std::stoi(
         p.GetProperty(MAX_RETRY_TX_COUNT, MAX_RETRY_TX_COUNT_DEFAULT));
+
+    bench_seconds_ =
+        std::stoi(p.GetProperty(BENCH_SECONDS, BENCH_SECONDS_DEFAULT));
 }
 
 ycsbc::Generator<uint64_t> *CoreWorkload::GetFieldLenGenerator(

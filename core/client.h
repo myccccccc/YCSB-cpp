@@ -9,6 +9,8 @@
 #ifndef YCSB_C_CLIENT_H_
 #define YCSB_C_CLIENT_H_
 
+#include <butil/time.h>
+
 #include <string>
 
 #include "core_workload.h"
@@ -40,9 +42,17 @@ inline int ClientThread(ycsbc::DB *db, ycsbc::CoreWorkload *wl,
             i += batch_count;
         }
     } else {
-        for (int i = 0; i < num_ops; ++i) {
-            wl->DoTx(*db);
-            ops++;
+        if (wl->bench_seconds()) {
+            auto end_time = butil::gettimeofday_s() + wl->bench_seconds();
+            while (butil::gettimeofday_s() < end_time) {
+                wl->DoTx(*db);
+                ops++;
+            }
+        } else {
+            for (int i = 0; i < num_ops; ++i) {
+                wl->DoTx(*db);
+                ops++;
+            }
         }
     }
 
