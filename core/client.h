@@ -45,13 +45,15 @@ inline int ClientThread(ycsbc::DB *db, ycsbc::CoreWorkload *wl,
         if (wl->bench_seconds()) {
             auto end_time = butil::gettimeofday_s() + wl->bench_seconds();
             while (butil::gettimeofday_s() < end_time) {
-                wl->DoTx(*db);
-                ops++;
+                if (wl->DoTx(*db)) {
+                    ops++;
+                }
             }
         } else {
             for (int i = 0; i < num_ops; ++i) {
-                wl->DoTx(*db);
-                ops++;
+                if (wl->DoTx(*db)) {
+                    ops++;
+                }
             }
         }
     }
