@@ -56,34 +56,46 @@ std::string BasicMeasurements::GetStatusMsg() {
         uint64_t cnt = count_[op].load(std::memory_order_relaxed);
         if (cnt == 0) continue;
         if (op == RETRY) {
-            msg_stream << " [" << kOperationString[op] << ":"
-                       << " Count=" << cnt << " Max="
-                       << latency_max_[op].load(std::memory_order_relaxed)
-                       << " Min="
-                       << latency_min_[op].load(std::memory_order_relaxed)
-                       << " Avg="
-                       << ((cnt > 0)
-                               ? static_cast<double>(latency_sum_[op].load(
-                                     std::memory_order_relaxed)) /
-                                     cnt
-                               : 0)
-                       << " qps=" << bvar_latency_[op].qps(1) << "]";
+            msg_stream
+                << " [" << kOperationString[op]
+                << ":"
+                //                       << " Count=" << cnt << " Max="
+                //                       <<
+                //                       latency_max_[op].load(std::memory_order_relaxed)
+                //                       << " Min="
+                //                       <<
+                //                       latency_min_[op].load(std::memory_order_relaxed)
+                //                       << " Avg="
+                //                       << ((cnt > 0)
+                //                               ?
+                //                               static_cast<double>(latency_sum_[op].load(
+                //                                     std::memory_order_relaxed))
+                //                                     / cnt
+                //                               : 0)
+                << " qps=" << bvar_latency_[op].qps(1) << "]";
         } else {
-            msg_stream << " [" << kOperationString[op] << ":"
-                       << " Count=" << cnt << " Max="
-                       << latency_max_[op].load(std::memory_order_relaxed) /
-                              1000.0
-                       << " Min="
-                       << latency_min_[op].load(std::memory_order_relaxed) /
-                              1000.0
-                       << " Avg="
-                       << ((cnt > 0)
-                               ? static_cast<double>(latency_sum_[op].load(
-                                     std::memory_order_relaxed)) /
-                                     cnt
-                               : 0) /
-                              1000.0
-                       << " qps=" << bvar_latency_[op].qps(1) << "]";
+            msg_stream
+                << " [" << kOperationString[op]
+                << ":"
+                //                       << " Count=" << cnt << " Max="
+                //                       <<
+                //                       latency_max_[op].load(std::memory_order_relaxed)
+                //                       /
+                //                              1000.0
+                //                       << " Min="
+                //                       <<
+                //                       latency_min_[op].load(std::memory_order_relaxed)
+                //                       /
+                //                              1000.0
+                //                       << " Avg="
+                //                       << ((cnt > 0)
+                //                               ?
+                //                               static_cast<double>(latency_sum_[op].load(
+                //                                     std::memory_order_relaxed))
+                //                                     / cnt
+                //                               : 0) /
+                //                              1000.0
+                << " qps=" << bvar_latency_[op].qps(1) << "]";
         }
         total_cnt += cnt;
     }
