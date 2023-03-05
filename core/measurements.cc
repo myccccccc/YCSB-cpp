@@ -43,6 +43,7 @@ void BasicMeasurements::Report(Operation op, uint64_t latency) {
            !latency_max_[op].compare_exchange_weak(prev_max, latency,
                                                    std::memory_order_relaxed))
         ;
+    bvar_latency_[op] << latency;
 }
 
 std::string BasicMeasurements::GetStatusMsg() {
@@ -66,7 +67,7 @@ std::string BasicMeasurements::GetStatusMsg() {
                                      std::memory_order_relaxed)) /
                                      cnt
                                : 0)
-                       << "]";
+                       << " qps=" << bvar_latency_[op].qps(1) << "]";
         } else {
             msg_stream << " [" << kOperationString[op] << ":"
                        << " Count=" << cnt << " Max="

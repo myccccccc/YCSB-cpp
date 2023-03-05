@@ -8,6 +8,8 @@
 #ifndef YCSB_C_MEASUREMENTS_H_
 #define YCSB_C_MEASUREMENTS_H_
 
+#include <bvar/bvar.h>
+
 #include <atomic>
 
 #include "core_workload.h"
@@ -38,6 +40,8 @@ class BasicMeasurements : public Measurements {
     std::atomic<uint64_t> latency_sum_[MAXOPTYPE];
     std::atomic<uint64_t> latency_min_[MAXOPTYPE];
     std::atomic<uint64_t> latency_max_[MAXOPTYPE];
+
+    bvar::LatencyRecorder bvar_latency_[MAXOPTYPE];
 };
 
 #ifdef HDRMEASUREMENT
