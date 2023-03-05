@@ -83,7 +83,7 @@ std::string BasicMeasurements::GetStatusMsg() {
                                      cnt
                                : 0) /
                               1000.0
-                       << "]";
+                       << " qps=" << bvar_latency_[op].qps(1) << "]";
         }
         total_cnt += cnt;
     }
