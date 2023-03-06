@@ -126,7 +126,7 @@ class DBWrapper : public DB {
    private:
     DB *db_;
     Measurements *measurements_;
-    utils::Timer<uint64_t, std::nano> timer_;
+    utils::butilTimer timer_;
 };
 
 }  // namespace ycsbc

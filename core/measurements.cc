@@ -73,6 +73,22 @@ std::string BasicMeasurements::GetStatusMsg() {
                 //                                     / cnt
                 //                               : 0)
                 << " qps=" << bvar_latency_[op].qps(1) << "]";
+        } else if (op == READ) {
+            msg_stream << " [" << kOperationString[op] << ":"
+                       << " Count=" << cnt << " Max="
+                       << latency_max_[op].load(std::memory_order_relaxed)
+                       << " Min="
+                       << latency_min_[op].load(std::memory_order_relaxed)
+                       << " Avg="
+                       << ((cnt > 0)
+                               ? static_cast<double>(latency_sum_[op].load(
+                                     std::memory_order_relaxed)) /
+                                     cnt
+                               : 0)
+                       << " qps=" << bvar_latency_[op].qps(1) << " p50/p90/p99="
+                       << bvar_latency_[op].latency_percentile(0.5) << "/"
+                       << bvar_latency_[op].latency_percentile(0.9) << "/"
+                       << bvar_latency_[op].latency_percentile(0.99) << "]";
         } else {
             msg_stream
                 << " [" << kOperationString[op]

@@ -9,6 +9,8 @@
 #ifndef YCSB_C_TIMER_H_
 #define YCSB_C_TIMER_H_
 
+#include <butil/time.h>
+
 #include <chrono>
 
 namespace ycsbc {
@@ -32,6 +34,23 @@ class Timer {
     using Clock = std::chrono::high_resolution_clock;
 
     Clock::time_point time_;
+};
+
+class butilTimer {
+   public:
+    void Start() { time_ = butil::gettimeofday_us(); }
+
+    uint64_t End() {
+        uint64_t now = butil::gettimeofday_us();
+        if (now > time_) {
+            return now - time_;
+        } else {
+            return 0;
+        }
+    }
+
+   private:
+    uint64_t time_;
 };
 
 }  // namespace utils
